@@ -74,7 +74,7 @@ def retrieve_data():
     #traffic_df = bzm_get_data.merge_data(json_df_features)
     #traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz')
     #print(traffic_file)
-    traffic_file = 'traffic_df_2024_Q4_2025_YTD.csv.gz'
+    traffic_file = os.path.join(DATA_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz')
     traffic_df = pd.read_csv(traffic_file)
 
     """" Can move to bzm_get_data? - Start """
@@ -201,7 +201,7 @@ def update_map_data(df_map_base, df):
 
     return df_map
 
-
+DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 
 # Initialize constants, variables and get data
