@@ -734,7 +734,11 @@ def get_street_name(clickData):
 
 def update_map(street_name):
 
-    zoom_factor = 13
+    callback_trigger = ctx.triggered_id
+    if (callback_trigger == 'street_name_dd'):
+         zoom_factor = 13
+    else:
+         zoom_factor = 11
 
     df_map = update_map_data(df_map_base, traffic_df_id_bc)
     idx = df_map.loc[df_map['osm.name'] == street_name]
