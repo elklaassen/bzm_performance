@@ -19,6 +19,7 @@ import plotly.express as px
 from dash import Dash, html, dcc, Output, Input, callback, ctx, callback_context
 from dash.exceptions import PreventUpdate
 import datetime
+import json
 
 from flask import request, make_response
 
@@ -98,7 +99,6 @@ def retrieve_data():
 #### Set Language ####
 
 def update_language(language):
-
     # Initiate translation
     appname = 'bzm'
     localedir = os.path.join(os.path.dirname(__file__), 'locales')
@@ -306,14 +306,10 @@ server = app.server
 
 app.layout = dbc.Container(
     [
-
-        dcc.Location(id="url",  refresh=True),
-        #html.Div(id="hidden_layout_for_redirect"),
-
         dbc.Row([
             dbc.Col([
                 #data_table,
-                html.H1(_('Berlin Counts Mobility'), style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 00}, className='bg-#F2F2F2'),
+                html.H1(_('Berlin Counts Mobility'), id='header_test', style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 00}, className='bg-#F2F2F2'),
             ], width=5),
             dbc.Col([
                 html.H6('Map info', id='popover_map_info', className= 'text-end', style={'margin-left': 00, 'margin-top': 45, 'margin-bottom': 00, 'margin-right': 30, 'color': ADFC_darkgrey}),
@@ -689,24 +685,37 @@ app.layout = dbc.Container(
 )
 
 @app.callback(
-    Output("url", "href"),
-     Input('language_selector', 'value'),
+    Output('header_test', 'children'),
+    Input('language_selector', 'value'),
 )
 def get_language(lang_code):
+
+    if lang_code is None:
+       cookie_value = request.cookies.get('lang')
+       print('Cookie')
+       print(cookie_value)
+
     #if lang_code is None:
-    #    cookie_lang_code = request.cookies.get('lang', 'de')
+    #cookie_lang_code = request.cookies.get('lang', 'de')
     #else:
-    ###callback_context.response.set_cookie('lang', lang_code)
+        #callback_context.response.set_cookie('lang', lang_code)
         #callback_context.response.status_code = 303
         # return '/'
 
-    # print(lang_code, cookie_lang_code)
     # update_language('de')
     if ctx.triggered_id == "language_selector":
-        callback_context.response.set_cookie('lang', lang_code)
-        #return "/"
-    else:
-        raise PreventUpdate
+        data = {
+            'lang': lang_code,
+        }
+        #print(data)
+        json_data = json.dumps(data)
+        # Set the cookie here (example using Flask)
+        callback_context.response.set_cookie('language_setting', json_data)
+        return 'Cookie set to' + json_data
+
+    #return update_language(lang_code)
+    #else:
+        #raise PreventUpdate
 
 ### Map callback ###
 @callback(
@@ -1109,10 +1118,10 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
 
     return pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, sc_explore
 
-#if __name__ == "__main__":
+if __name__ == "__main__":
     #app.run(host='0.0.0.0', port=8080)
     #port = int(8080) #int(os.environ.get('PORT', 8050)) # Default to 8050 if PORT is not set
     #app.run_server(debug=True, port=port)
     #app.run_server(host='0.0.0.0', port=port)
-#    app.run_server(debug=False)
-app.run_server(debug=False, host='0.0.0.0', port=10000)
+    app.run_server(debug=False)
+    #app.run_server(debug=False, host='0.0.0.0', port=10000)
