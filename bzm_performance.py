@@ -309,7 +309,7 @@ app.layout = dbc.Container(
         dbc.Row([
             dbc.Col([
                 #data_table,
-                html.H1(_('Berlin Counts Mobility'), id='header_test', style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 00}, className='bg-#F2F2F2'),
+                html.H1(_('Berlin Counts Mobility'), style={'margin-left': 40, 'margin-top': 20, 'margin-bottom': 00, 'margin-right': 00}, className='bg-#F2F2F2'),
             ], width=5),
             dbc.Col([
                 html.H6('Map info', id='popover_map_info', className= 'text-end', style={'margin-left': 00, 'margin-top': 45, 'margin-bottom': 00, 'margin-right': 30, 'color': ADFC_darkgrey}),
@@ -685,7 +685,6 @@ app.layout = dbc.Container(
 )
 
 @app.callback(
-    Output('header_test', 'children'),
     Input('language_selector', 'value'),
 )
 def get_language(lang_code):
