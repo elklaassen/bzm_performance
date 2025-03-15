@@ -19,7 +19,7 @@ import plotly.express as px
 from dash import Dash, html, dcc, Output, Input, callback, ctx, callback_context
 from dash.exceptions import PreventUpdate
 import datetime
-
+from functools import lru_cache
 
 DEPLOYED = __name__ != '__main__'
 
@@ -56,7 +56,7 @@ def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.ge
     nan_rows = df_geojson[df_geojson['osm.name'].isnull()]
     return df_geojson.drop(nan_rows.index)
 
-
+@lru_cache(maxsize=128)
 def retrieve_data():
 
     # Read geojson data file to access geometry coordinates - using URL
@@ -207,7 +207,6 @@ def get_bike_car_ratios(df):
 def translate_bc_labels():
     speed_labels = {'Over 10x more cars': _('Over 10x more cars'), 'Over 5x more cars': _('Over 5x more cars'), 'Over 2x more cars': _('Over 2x more cars'), 'More cars than bikes': _('More cars than bikes'), 'More bikes than cars': _('More bikes than cars')}
     traffic_df_id_bc['map_line_color'] = traffic_df_id_bc['map_line_color'].map(speed_labels)
-
 
 def update_map_data(df_map_base, df):
     # Create map info by joining geo_df_map_info with map_line_color from traffic_df_id_bc (based on bike/car ratios)
