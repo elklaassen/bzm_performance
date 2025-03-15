@@ -16,11 +16,9 @@ import dash_bootstrap_components as dbc
 import geopandas as gpd
 import pandas as pd
 import plotly.express as px
-from babel.dates import get_day_names, get_month_names
 from dash import Dash, html, dcc, Output, Input, callback, ctx, callback_context
 from dash.exceptions import PreventUpdate
 import datetime
-import json
 
 
 DEPLOYED = __name__ != '__main__'
