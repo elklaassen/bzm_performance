@@ -606,7 +606,7 @@ def serve_layout():
             ], width=1
             ),
             dbc.Col([
-                html.H6(_('Year:'), style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
+                html.H6(_('Year')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_B',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year'].unique()],
@@ -618,7 +618,7 @@ def serve_layout():
             ], width=1
             ),
             dbc.Col([
-                html.H6(_('Month:'), style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
+                html.H6(_('Month')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_month_B',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
@@ -630,7 +630,7 @@ def serve_layout():
             ], width=1
             ),
             dbc.Col([
-                html.H6(_('Week:'), style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
+                html.H6(_('Week')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_week_B',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
@@ -642,7 +642,7 @@ def serve_layout():
             ], width=1
             ),
             dbc.Col([
-                html.H6(_('Day:'), style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
+                html.H6(_('Day')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_date_B',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['date'].unique()],
@@ -1088,26 +1088,31 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         selected_value_A = dropdown_year_A
         selected_value_B = dropdown_year_B
         group_by = 'month'
+        label = 'Year'
     elif callback_trigger == 'dropdown_year_month_A' or callback_trigger == 'dropdown_year_month_B':
         time_division = 'year_month'
         selected_value_A = dropdown_year_month_A
         selected_value_B = dropdown_year_month_B
         group_by = 'day'
+        label = 'Month'
     elif callback_trigger == 'dropdown_year_week_A' or callback_trigger == 'dropdown_year_week_B':
         time_division = 'year_week'
         selected_value_A = dropdown_year_week_A
         selected_value_B = dropdown_year_week_B
         group_by = 'weekday'
+        label = 'Week'
     elif callback_trigger == 'dropdown_date_A' or callback_trigger == 'dropdown_date_B':
         time_division = 'date'
         selected_value_A = dropdown_date_A
         selected_value_B = dropdown_date_B
         group_by = 'hour'
+        label = 'Date'
     else:
         time_division = radio_time_division
         group_by = 'hour'
         selected_value_A = dropdown_date_A
         selected_value_B = dropdown_date_B
+        label = 'Date'
 
     # Prepare traffic_df_upt by selected street
     traffic_df_upt_str = update_selected_street(traffic_df_upt, segment_id, street_name)
@@ -1132,7 +1137,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     line_avg_delta_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + _(' (segment no:') + segment_id + ')')))
     line_avg_delta_traffic.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
     line_avg_delta_traffic.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-    line_avg_delta_traffic.update_layout(title_text=_('Period') + ' A : ' + _(time_division) + ' - ' + selected_value_A + ' , ' + _('Period') + ' B (----): ' + _(time_division) + ' - ' + selected_value_B)
+    line_avg_delta_traffic.update_layout(title_text=_('Period') + ' A : ' + _(label) + ' - ' + selected_value_A + ' , ' + _('Period') + ' B (----): ' + _(label) + ' - ' + selected_value_B)
     line_avg_delta_traffic.update_layout(yaxis_title=_('Absolute traffic count'))
     line_avg_delta_traffic.update_layout(legend_title_text=_('Traffic Type'))
     line_avg_delta_traffic.update_traces({'name': _('Pedestrians') + ' A'}, selector={'name': 'ped_total'})
