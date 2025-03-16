@@ -19,7 +19,7 @@ import plotly.express as px
 from dash import Dash, html, dcc, Output, Input, callback, ctx, callback_context
 from dash.exceptions import PreventUpdate
 import datetime
-from functools import lru_cache
+#from functools import lru_cache
 
 DEPLOYED = __name__ != '__main__'
 
@@ -56,7 +56,7 @@ def get_locations(filepath="https://berlin-zaehlt.de/csv/bzm_telraam_segments.ge
     nan_rows = df_geojson[df_geojson['osm.name'].isnull()]
     return df_geojson.drop(nan_rows.index)
 
-@lru_cache(maxsize=128)
+#@lru_cache(maxsize=128)
 def retrieve_data():
 
     # Read geojson data file to access geometry coordinates - using URL
@@ -774,6 +774,8 @@ def update_map(street_name):
     else:
          zoom_factor = 11
 
+    # TODO: improve efficiency by managing translation w/o recalculating bc ratios
+    traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt)
     df_map = update_map_data(df_map_base, traffic_df_id_bc)
     idx = df_map.loc[df_map['osm.name'] == street_name]
     lon_str = idx['x'].values[0]
