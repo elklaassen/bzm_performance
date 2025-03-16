@@ -195,8 +195,8 @@ def get_bike_car_ratios(df):
     traffic_df_id_bc['bike_car_ratio'] = traffic_df_id_bc['bike_total'] / traffic_df_id_bc['car_total']
 
     bins = [0, 0.1, 0.2, 0.5, 1, 500]
-    speed_labels = [_('Over 10x more cars'), _('Over 5x more cars'), _('Over 2x more cars'), _('More cars than bikes'),
-              _('More bikes than cars')]
+    #speed_labels = [_('Over 10x more cars'), _('Over 5x more cars'), _('Over 2x more cars'), _('More cars than bikes'), _('More bikes than cars')]
+    speed_labels = ['Over 10x more cars', 'Over 5x more cars', 'Over 2x more cars', 'More cars than bikes', 'More bikes than cars']
     traffic_df_id_bc['map_line_color'] = pd.cut(traffic_df_id_bc['bike_car_ratio'], bins=bins, labels=speed_labels)
     # Prepare traffic_df_id_bc for join operation
     traffic_df_id_bc['segment_id'] = traffic_df_id_bc['segment_id'].astype(int)
@@ -724,7 +724,6 @@ def get_language(lang_code_dd):
         #callback_context.response.status_code = 303
     update_language(lang_code_dd)
     translate_traffic_df_data()
-    translate_bc_labels()
     return '/'
 
     # update_language('de')
@@ -775,8 +774,8 @@ def update_map(street_name):
          zoom_factor = 11
 
     # TODO: improve efficiency by managing translation w/o recalculating bc ratios
-    traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt)
-    df_map = update_map_data(df_map_base, traffic_df_id_bc)
+    #traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt)
+    #df_map = update_map_data(df_map_base, traffic_df_id_bc)
     idx = df_map.loc[df_map['osm.name'] == street_name]
     lon_str = idx['x'].values[0]
     lat_str = idx['y'].values[0]
@@ -784,17 +783,23 @@ def update_map(street_name):
     sep = '&nbsp;|&nbsp;'
 
     street_map = px.line_map(df_map, lat='y', lon='x', line_group='segment_id', hover_name = 'osm.name', color= 'map_line_color', color_discrete_map= {
-        _('More bikes than cars'): ADFC_green,
-        _('More cars than bikes'): ADFC_blue,
-        _('Over 2x more cars'): ADFC_orange,
-        _('Over 5x more cars'): ADFC_crimson,
-        _('Over 10x more cars'): ADFC_pink,
-        _('Inactive - no data'): ADFC_lightgrey},
+        'More bikes than cars': ADFC_green,
+        'More cars than bikes': ADFC_blue,
+        'Over 2x more cars': ADFC_orange,
+        'Over 5x more cars': ADFC_crimson,
+        'Over 10x more cars': ADFC_pink,
+        'Inactive - no data': ADFC_lightgrey},
         map_style="streets", center= dict(lat=lat_str, lon=lon_str), height=600, zoom= zoom_factor)
 
     street_map.update_traces(line_width=5, opacity=1.0)
     street_map.update_layout(margin=dict(l=40, r=20, t=40, b=30))
     street_map.update_layout(legend_title=_('Street color'))
+    street_map.update_traces({'name': _('More bikes than cars')}, selector={'name': 'More bikes than cars'})
+    street_map.update_traces({'name': _('More cars than bikes')}, selector={'name': 'More cars than bikes'})
+    street_map.update_traces({'name': _('Over 2x more cars')}, selector={'name': 'Over 2x more cars'})
+    street_map.update_traces({'name': _('Over 5x more cars')}, selector={'name': 'Over 5x more cars'})
+    street_map.update_traces({'name': _('Over 10x more cars')}, selector={'name': 'Over 10x more cars'})
+    street_map.update_traces({'name': _('Inactive - no data')}, selector={'name': 'Inactive - no data'})
     street_map.update_layout(legend=dict(yanchor="top", y=0.99, xanchor="right", x=0.99))
     street_map.update_layout(annotations=[
         dict(
