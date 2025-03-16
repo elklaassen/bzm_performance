@@ -76,7 +76,7 @@ def retrieve_data():
     #traffic_df = bzm_get_data.merge_data(json_df_features)
     #traffic_file = os.path.join(ASSET_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz')
     #print(traffic_file)
-    traffic_file = os.path.join(DATA_DIR, 'traffic_df_2024_Q4_2025_YTD.csv.gz')
+    traffic_file = os.path.join(DATA_DIR, 'traffic_df_2023_2024_2025_YTD.csv.gz')
     traffic_df = pd.read_csv(traffic_file)
 
     """" Can move to bzm_get_data? - Start """
@@ -239,8 +239,8 @@ ADFC_lightgrey = '#DEDEDE'
 ADFC_palegrey = '#F2F2F2'
 ADFC_pink = '#EB9AAC'
 
-street_name = 'Köpenicker Straße'
-segment_id = '9000006435'
+street_name = 'Kastanienallee'
+segment_id = '9000004995'
 
 zoom_factor = 11
 
