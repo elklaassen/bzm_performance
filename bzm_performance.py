@@ -4,7 +4,7 @@
 
 # @file    bzm_performance.py
 # @author  Egbert Klaassen
-# @date    2025-03-15
+# @date    2025-03-18
 
 # traffic_df        - dataframe with measured traffic data file
 # geo_df            - geopandas dataframe, street coordinates for px.line_map
@@ -539,7 +539,7 @@ def serve_layout():
         html.Br(),
         dbc.Row([
             dbc.Col([
-                dcc.Graph(id='sc_explore', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
+                dcc.Graph(id='bar_ranking', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
             ], width=12
             ),
         ]),
@@ -829,7 +829,7 @@ def update_map(street_name):
     Output(component_id='bar_perc_speed', component_property='figure'),
     Output(component_id='bar_avg_speed', component_property='figure'),
     Output(component_id='bar_v85', component_property='figure'),
-    Output(component_id='sc_explore', component_property='figure'),
+    Output(component_id='bar_ranking', component_property='figure'),
     Input(component_id='radio_time_division', component_property='value'),
     Input(component_id='radio_time_unit', component_property='value'),
     Input(component_id='street_name_dd', component_property='value'),
@@ -1052,18 +1052,18 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         annotation['font'] = {'size': 14}
 
     # Create explorer chart
-    #Out: df_sc_explore = traffic_df_upt_dt
-    df_sc_explore = traffic_df_upt_dt.groupby(by=['osm.name', 'street_selection'], sort= False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
-    df_sc_explore = df_sc_explore.sort_values(by=[radio_y_axis], ascending=False)
-    #Out: df_sc_explore.reset_index(inplace=True)
+    #Out: df_bar_ranking = traffic_df_upt_dt
+    df_bar_ranking = traffic_df_upt_dt.groupby(by=['osm.name', 'street_selection'], sort= False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
+    df_bar_ranking = df_bar_ranking.sort_values(by=[radio_y_axis], ascending=False)
+    #Out: df_bar_ranking.reset_index(inplace=True)
 
     # Assess x and y for annotation
-    #Out: annotation_index = df_sc_explore[df_sc_explore['osm.name'] == street_name].index[0]
-    annotation_index= df_sc_explore[df_sc_explore['osm.name'] == street_name].index.item()
+    #Out: annotation_index = df_bar_ranking[df_bar_ranking['osm.name'] == street_name].index[0]
+    annotation_index= df_bar_ranking[df_bar_ranking['osm.name'] == street_name].index.item()
     annotation_x = annotation_index
-    annotation_y = df_sc_explore.loc[df_sc_explore['osm.name'] == street_name, radio_y_axis].iloc[0]
+    annotation_y = df_bar_ranking.loc[df_bar_ranking['osm.name'] == street_name, radio_y_axis].iloc[0]
 
-    sc_explore = px.bar(df_sc_explore,
+    bar_ranking = px.bar(df_bar_ranking,
         x='osm.name', y=radio_y_axis,
         color=radio_y_axis,
         color_continuous_scale='temps',
@@ -1072,13 +1072,13 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         height=600,
     )
 
-    sc_explore.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    sc_explore.add_annotation(x=annotation_x, y=annotation_y, text= street_name + _('<br>(segment no:') + segment_id + ')', showarrow=True)
-    sc_explore.update_annotations(ax=0, ay=-40, arrowhead=2, arrowsize=2, arrowwidth = 1, arrowcolor= ADFC_darkgrey, xanchor='left')
-    sc_explore.update_layout(legend_title_text=_('Traffic Type'))
-    sc_explore.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-    sc_explore.update_layout(yaxis_title= 'Total count')
-    for annotation in sc_explore.layout.annotations: annotation['font'] = {'size': 14}
+    bar_ranking.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
+    bar_ranking.add_annotation(x=annotation_x, y=annotation_y, text= street_name + _('<br>(segment no:') + segment_id + ')', showarrow=True)
+    bar_ranking.update_annotations(ax=0, ay=-40, arrowhead=2, arrowsize=2, arrowwidth = 1, arrowcolor= ADFC_darkgrey, xanchor='left')
+    bar_ranking.update_layout(legend_title_text=_('Traffic Type'))
+    bar_ranking.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
+    bar_ranking.update_layout(yaxis_title= 'Total count')
+    for annotation in bar_ranking.layout.annotations: annotation['font'] = {'size': 14}
 
     # Comparison Graph
     callback_trigger = ctx.triggered_id
@@ -1153,7 +1153,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    return pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, sc_explore
+    return pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking
 
 if __name__ == "__main__":
     #app.run(host='0.0.0.0', port=8080)
