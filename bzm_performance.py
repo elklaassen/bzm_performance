@@ -418,7 +418,7 @@ def serve_layout():
                     target="popover_filter", trigger="hover"
                 ),
             ], width=1),
-        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded'),
+        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded "g-0"'),
 
         # Absolute traffic
         dbc.Row([
@@ -541,7 +541,7 @@ def serve_layout():
         html.Br(),
         dbc.Row([
             dbc.Col([
-                dcc.Graph(id='bar_ranking', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30})
+                dcc.Graph(id='bar_ranking', figure={}, style={'margin-left': 40, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 30})
             ], width=12
             ),
         ]),
@@ -566,7 +566,7 @@ def serve_layout():
 
             dbc.Col([
                 html.H6(_('Period') + ' A',
-                        style={'margin-left': 40, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10, 'textAlign': 'right'}),
+                        style={'margin-left': 40, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10, 'textAlign': 'right'}),
             ], width=3
             ),
             dbc.Col([
@@ -575,7 +575,7 @@ def serve_layout():
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year'].unique()],
                                    key=lambda x: x['label']),
                     value=traffic_df['year'][len(traffic_df['year']) - 1],
-                    style={'margin-left': 00, 'margin-bottom': 00},
+                    style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
             ], width=2),
@@ -585,7 +585,7 @@ def serve_layout():
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
                                    key=lambda x: x['label']),
                     value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
-                    style={'margin-left': 00, 'margin-bottom': 00},
+                    style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
             ], width=2),
@@ -595,7 +595,7 @@ def serve_layout():
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
                                    key=lambda x: x['label']),
                     value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
-                    style={'margin-left': 00, 'margin-bottom': 00},
+                    style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
             ], width=2),
@@ -605,13 +605,13 @@ def serve_layout():
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['date'].unique()],
                                    key=lambda x: x['label']),
                     value=traffic_df['date'][len(traffic_df['year_week']) - 1],
-                    style={'margin-left': 00, 'margin-bottom': 00},
+                    style={'margin-left': 00, 'margin-bottom': 5},
                     clearable=False
                 ),
             ], width=2),
 
             dbc.Col([
-                html.H6(_('Period') + ' B', style={'margin-left': 40, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10, 'textAlign': 'right'}),
+                html.H6(_('Period') + ' B', style={'margin-left': 40, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10, 'textAlign': 'right'}),
             ], width=3),
             dbc.Col([
                 dcc.Dropdown(
@@ -654,7 +654,7 @@ def serve_layout():
                 ),
             ], width=2),
         html.Br(),
-        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue}, className='sticky-top rounded "g-0"'),
+        ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded "g-0"'),
         dbc.Row([
             dbc.Col([
                 html.H4(_('Compare traffic periods'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 00}),
@@ -1052,16 +1052,14 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         annotation['font'] = {'size': 14}
 
     # Create explorer chart
-    #Out: df_bar_ranking = traffic_df_upt_dt
     df_bar_ranking = traffic_df_upt_dt.groupby(by=['osm.name', 'street_selection'], sort= False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     df_bar_ranking = df_bar_ranking.sort_values(by=[radio_y_axis], ascending=False)
-    #Out: df_bar_ranking.reset_index(inplace=True)
+    df_bar_ranking.reset_index(inplace=True)
 
     # Assess x and y for annotation
-    #Out: annotation_index = df_bar_ranking[df_bar_ranking['osm.name'] == street_name].index[0]
-    annotation_index= df_bar_ranking[df_bar_ranking['osm.name'] == street_name].index.item()
+    annotation_index = df_bar_ranking[df_bar_ranking['osm.name'] == street_name].index[0]
     annotation_x = annotation_index
-    annotation_y = df_bar_ranking.loc[df_bar_ranking['osm.name'] == street_name, radio_y_axis].iloc[0]
+    annotation_y = df_bar_ranking[radio_y_axis].values[annotation_index]
 
     bar_ranking = px.bar(df_bar_ranking,
         x='osm.name', y=radio_y_axis,
@@ -1160,5 +1158,5 @@ if __name__ == "__main__":
     #port = int(8080) #int(os.environ.get('PORT', 8050)) # Default to 8050 if PORT is not set
     #app.run_server(debug=True, port=port)
     #app.run_server(host='0.0.0.0', port=port)
-    app.run_server(debug=True)
+    app.run_server(debug=False)
     #app.run_server(debug=False, host='0.0.0.0', port=10000)
