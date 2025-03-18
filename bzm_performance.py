@@ -238,11 +238,13 @@ ADFC_crimson = '#B44958'
 ADFC_lightgrey = '#DEDEDE'
 ADFC_palegrey = '#F2F2F2'
 ADFC_pink = '#EB9AAC'
+ADFC_yellow = '#EEDE72'
 
-street_name = 'Kastanienallee'
-segment_id = '9000004995'
 
-zoom_factor = 11
+street_name = 'Alte Jakobstraße'
+segment_id = '9000002582'
+
+zoom_factor = 11.5
 
 init_language = 'en'
 update_language(init_language)
@@ -544,18 +546,30 @@ def serve_layout():
             ),
         ]),
 
-        # Compare traffic - settings
+        ### Compare traffic graph
         dbc.Row([
             dbc.Col([
-                html.H6(_('Period') + ' A', style={'margin-left': 00, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}),
-            ], width=6
+                html.H6(_('Select periods to compare')+':', style={'margin-left': 40, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
+            ], width=3),
+            dbc.Col([
+                html.H6(_('Year')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
+            ], width=2),
+            dbc.Col([
+                html.H6(_('Month')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
+            ], width=2),
+            dbc.Col([
+                html.H6(_('Week') + ':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
+            ], width=2),
+            dbc.Col([
+                html.H6(_('Day') + ':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 10, 'margin-bottom': 10}),
+            ], width=2),
+
+            dbc.Col([
+                html.H6(_('Period') + ' A',
+                        style={'margin-left': 40, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10, 'textAlign': 'right'}),
+            ], width=3
             ),
             dbc.Col([
-                html.H6(_('Period') + ' B', style={'margin-left': 00, 'margin-right': 40, 'margin-top': 10, 'margin-bottom': 10}),
-            ], width=6
-            ),
-            dbc.Col([
-                html.H6(_('Year')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_A',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year'].unique()],
@@ -564,10 +578,8 @@ def serve_layout():
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=1
-            ),
+            ], width=2),
             dbc.Col([
-                html.H6(_('Month')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_month_A',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
@@ -576,10 +588,8 @@ def serve_layout():
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=1
-            ),
+            ], width=2),
             dbc.Col([
-                html.H6(_('Week')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_week_A',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
@@ -588,10 +598,8 @@ def serve_layout():
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=1
-            ),
+            ], width=2),
             dbc.Col([
-                html.H6(_('Day')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_date_A',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['date'].unique()],
@@ -600,59 +608,51 @@ def serve_layout():
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=2
-            ),
+            ], width=2),
+
             dbc.Col([
-            ], width=1
-            ),
+                html.H6(_('Period') + ' B', style={'margin-left': 40, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10, 'textAlign': 'right'}),
+            ], width=3),
             dbc.Col([
-                html.H6(_('Year')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_B',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year'].unique()],
                                    key=lambda x: x['label']),
-                    value=traffic_df['year'][len(traffic_df['year']) - 1],
+                    value=traffic_df['year'][1],
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=1
-            ),
+            ], width=2),
             dbc.Col([
-                html.H6(_('Month')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_month_B',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year_month'].unique()],
                                    key=lambda x: x['label']),
-                    value=traffic_df['year_month'][len(traffic_df['year_month']) - 1],
+                    value=traffic_df['year_month'][1],
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=1
-            ),
+            ], width=2),
             dbc.Col([
-                html.H6(_('Week')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_year_week_B',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['year_week'].unique()],
                                    key=lambda x: x['label']),
-                    value=traffic_df['year_week'][len(traffic_df['year_week']) - 1],
+                    value=traffic_df['year_week'][1],
                     style={'margin-left': 00, 'margin-bottom': 00},
                     clearable=False
                 ),
-            ], width=1
-            ),
+            ], width=2),
             dbc.Col([
-                html.H6(_('Day')+':', style={'margin-left': 00, 'margin-right': 00, 'margin-top': 00, 'margin-bottom': 10}),
                 dcc.Dropdown(
                     id='dropdown_date_B',
                     options=sorted([{'label': i, 'value': i} for i in traffic_df['date'].unique()],
                                    key=lambda x: x['label']),
-                    value=traffic_df['date'][len(traffic_df['year_week']) - 1],
+                    value=traffic_df['date'][1],
                     style={'margin-left': 00, 'margin-bottom': 20},
                     clearable=False
                 ),
-            ], width=2
-            ),
+            ], width=2),
         html.Br(),
         ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue}, className='sticky-top rounded "g-0"'),
         dbc.Row([
@@ -696,7 +696,7 @@ def serve_layout():
                         ),
             ], width=6),
             html.Br(),
-        ], style={'margin-left': 40, 'margin-right': 40, 'margin-bottom': 40, 'background-color': ADFC_pink, 'opacity': 0.7}, className='rounded text-black'),
+        ], style={'margin-left': 40, 'margin-right': 40, 'margin-bottom': 40, 'background-color': ADFC_yellow, 'opacity': 0.7}, className='rounded text-black'),
     html.Br(),
     ],
     fluid = True,
@@ -771,7 +771,7 @@ def update_map(street_name):
     if (callback_trigger == 'street_name_dd'):
          zoom_factor = 13
     else:
-         zoom_factor = 11
+         zoom_factor = 11.5
 
     # TODO: improve efficiency by managing translation w/o recalculating bc ratios
     #traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt)
@@ -1160,5 +1160,5 @@ if __name__ == "__main__":
     #port = int(8080) #int(os.environ.get('PORT', 8050)) # Default to 8050 if PORT is not set
     #app.run_server(debug=True, port=port)
     #app.run_server(host='0.0.0.0', port=port)
-    app.run_server(debug=False)
+    app.run_server(debug=True)
     #app.run_server(debug=False, host='0.0.0.0', port=10000)
