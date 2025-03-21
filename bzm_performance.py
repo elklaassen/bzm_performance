@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+#!/usr/bin/env python3
 # Copyright (c) 2024-2025 Berlin zaehlt Mobilitaet
 # SPDX-License-Identifier: MIT
 
@@ -6,9 +7,11 @@
 # @author  Egbert Klaassen
 # @date    2025-03-18
 
+""""
 # traffic_df        - dataframe with measured traffic data file
 # geo_df            - geopandas dataframe, street coordinates for px.line_map
 # json_df           - json dataframe based on the same geojson as geo_df, providing features such as street names
+"""
 
 import gettext
 import os
@@ -114,7 +117,6 @@ def translate_traffic_df_data():
     traffic_df['street_selection'] = traffic_df['street_selection'].map(all_map)
 
 #### Set Language ####
-
 def update_language(lang_code):
     global language
     language=lang_code
@@ -123,7 +125,6 @@ def update_language(lang_code):
     localedir = os.path.join(os.path.dirname(__file__), 'locales')
     # Set up Gettext
     translations = gettext.translation(appname, localedir, fallback=True, languages=[language])
-    #translations = gettext.translation(appname, localedir, fallback=True, languages=language)
     # Install translation function
     translations.install()
     return
@@ -181,14 +182,18 @@ def get_comparison_data(df, radio_time_division, group_by, selected_value_A, sel
     return df_avg_traffic_delta_concat
 
 def update_selected_street(df, segment_id, street_name):
-
     # Generate "selected street only" df and populate "street_selection"
     df_str = df[df['segment_id'] == segment_id]
     df_str.loc[df_str['street_selection'] == _('All'), 'street_selection'] = street_name
 
+    if len(df_str) == 0:
+        no_data = True
+    else:
+        no_data = False
+
     # Add selected street to all streets
     traffic_df_upt_dt_str = df._append(df_str, ignore_index=True)
-    return traffic_df_upt_dt_str
+    return no_data, traffic_df_upt_dt_str
 
 def get_bike_car_ratios(df):
     traffic_df_id_bc = df.groupby(by=['segment_id'], as_index=False).agg(bike_total=('bike_total', 'sum'), car_total=('car_total', 'sum'))
@@ -244,7 +249,7 @@ ADFC_yellow = '#EEDE72'
 street_name = 'Alte Jakobstraße'
 segment_id = '9000002582'
 
-zoom_factor = 11.5
+zoom_factor = 11
 
 init_language = 'en'
 update_language(init_language)
@@ -282,7 +287,7 @@ hour_range = [traffic_df_upt["hour"].min(), traffic_df_upt["hour"].max()]
 traffic_df_upt_dt, min_date, max_date, min_hour, max_hour = filter_dt(traffic_df_upt, start_date, end_date, hour_range)
 
 # traffic_df_upt_dt_str
-traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
+no_data, traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
 
 ### Prepare map data ###
 if not DEPLOYED:
@@ -316,8 +321,9 @@ df_map = update_map_data(df_map_base, traffic_df_id_bc)
 ### Run Dash app ###
 if not DEPLOYED:
     print(_('Start dash...'))
-dbc_css = "https://cdn.jsdelivr.net/gh/AnnMarieW/dash-bootstrap-templates/dbc.min.css"
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP, dbc_css],
+
+#PythonAnywhere
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.BOOTSTRAP],
            meta_tags=[{'name': 'viewport', 'content': 'width=device-width, initial-scale=1'}]
            )
 
@@ -340,12 +346,12 @@ def serve_layout():
                 dcc.Dropdown(
                 id='language_selector',
                 options=[
-                    {'label': _('English'), 'value': 'en'},
-                    {'label': _('Deutsch'), 'value': 'de'},
+                    {'label': '🇬🇧' + ' ' + _('English'), 'value': 'en'},
+                    {'label': '🇩🇪' + ' ' + _('Deutsch'), 'value': 'de'},
                 ],
                 value=language
                 ),
-            ], width=4),
+            ], width={'size': 2, 'offset' : 2}),
         ]),
         dbc.Row([
             # Street map
@@ -363,13 +369,15 @@ def serve_layout():
                     style={'margin-top': 10, 'margin-bottom': 30}
                 ),
                 html.Hr(),
-                html.Span([html.H4(_('Traffic type - selected street'), style={'margin-top': 10, 'margin-bottom': 20, 'display': 'inline-block'}),
-                html.I(className='bi bi-info-circle-fill h6', id='popover_traffic_type', style={'margin-left': 5, 'margin-top': 10, 'margin-bottom': 20, 'display': 'inline-block', 'align': 'top', 'color': ADFC_lightgrey})]),
-                dbc.Popover(
-                    dbc.PopoverBody(_('Traffic type split of the currently selected street, based on currently selected date and hour range.')),
+                html.Span([
+                    html.H4(_('Traffic type - selected street'), id='selected_street_header',  style={'margin-top': 10, 'margin-bottom': 20, 'color': 'black'}, className='d-inline-block'),
+                    html.I(className='bi bi-info-circle-fill h6', id='popover_traffic_type', style={'margin-left': 10, 'margin-top': 10, 'margin-bottom': 20, 'align': 'top', 'color': ADFC_lightgrey}),
+                    dbc.Popover(
+                        dbc.PopoverBody(_('Traffic type split of the currently selected street, based on currently selected date and hour range.')),
                     target="popover_traffic_type",
-                    trigger="hover"
-                ),
+                    trigger="hover")
+                ]),
+
                 # Pie chart
                 dcc.Graph(id='pie_traffic', figure={}),
                 #html.Hr(),
@@ -403,21 +411,25 @@ def serve_layout():
                     minimum_nights=1
                 ),
             ], width=3),
+
             dbc.Col([
-                dbc.Checklist(
-                    id='toggle_uptime_filter',
-                    options=[{'label': _(' Filter uptime > 0.7'), 'value': 'filter_uptime_selected'}],
-                    value= ['filter_uptime_selected'],
-                    style = {'color' : ADFC_darkgrey, 'font_size' : 14, 'margin-left': 30, 'margin-top': 40, 'margin-bottom': 30}
-                ),
-            ], width=2),
-            dbc.Col([
-                html.Span([html.I(className='bi bi-info-circle-fill h6', id='popover_filter', style={'margin-top': 30, 'display': 'inline-block', 'color': ADFC_lightgrey})]),
-                dbc.Popover(
-                    dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
-                    target="popover_filter", trigger="hover"
-                ),
-            ], width=1),
+                html.Span([
+                    dbc.Checklist(
+                        id='toggle_uptime_filter',
+                        options=[{'label': _(' Filter uptime > 0.7'), 'value': 'filter_uptime_selected'}],
+                        value= ['filter_uptime_selected'],
+                        style = {'color' : ADFC_darkgrey, 'font_size' : 14, 'margin-left': 30, 'margin-top': 40, 'margin-bottom': 30},
+                        className='d-inline-block'
+                    ),
+                    html.I(className='bi bi-info-circle-fill h6',
+                        id='popover_filter',
+                        style={'margin-left': 10, 'margin-top': 0, 'color': ADFC_lightgrey}),
+                     dbc.Popover(
+                         dbc.PopoverBody(_('A high 0.7-0.8 uptime will always mean very good data. The first and last daylight hour of the day will always have lower uptimes. If uptimes during the day are below 0.5, that is usually a clear sign that something is probably wrong with the instance.')),
+                         target="popover_filter", trigger="hover")
+                     ]),
+                ], width=2),
+
         ], style={'margin-left': 40, 'margin-right': 40, 'background-color': ADFC_skyblue, 'opacity': 1.0}, className='sticky-top rounded "g-0"'),
 
         # Absolute traffic
@@ -513,7 +525,7 @@ def serve_layout():
             ], width=12
             ),
         ]),
-        # Explore with x- and y-axis scatter
+        # Ranking bar chart
         dbc.Row([
             dbc.Col([
                 html.H4(_('Street ranking by traffic type'), style={'margin-left': 40, 'margin-right': 40, 'margin-top': 30, 'margin-bottom': 30}),
@@ -771,7 +783,7 @@ def update_map(street_name):
     if (callback_trigger == 'street_name_dd'):
          zoom_factor = 13
     else:
-         zoom_factor = 11.5
+         zoom_factor = 11
 
     # TODO: improve efficiency by managing translation w/o recalculating bc ratios
     #traffic_df_id_bc = get_bike_car_ratios(traffic_df_upt)
@@ -822,6 +834,8 @@ def update_map(street_name):
 
 ### General traffic callback ###
 @callback(
+    Output(component_id='selected_street_header', component_property='children'),
+    Output(component_id='selected_street_header', component_property='style'),
     Output(component_id='pie_traffic', component_property='figure'),
     Output(component_id='line_abs_traffic', component_property='figure'),
     Output(component_id='bar_avg_traffic', component_property='figure'),
@@ -866,7 +880,13 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     segment_id = segment_id_index['segment_id'].values[0]
 
     # Update selected street
-    traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
+    no_data, traffic_df_upt_dt_str = update_selected_street(traffic_df_upt_dt, segment_id, street_name)
+    if no_data == True:
+        selected_street_header = _('No data available for selected range!')
+        color = {'color': ADFC_crimson}
+    else:
+        selected_street_header = street_name
+        color = {'color': ADFC_green}
 
     # Create pie chart
     df_pie = traffic_df_upt_dt_str[traffic_df_upt_dt_str['street_selection'] == street_name]
@@ -882,7 +902,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     pie_traffic.update_layout(showlegend=False)
     pie_traffic.update_traces(textposition='inside', textinfo='percent+label')
 
-    # Create abs line chart
+    ### Create abs line chart
     df_line_abs_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_division, 'street_selection'], sort = False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
 
     # Set readable date format for day-view
@@ -915,7 +935,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     line_abs_traffic.update_traces({'name': _('Heavy')}, selector={'name': 'heavy_total'})
     line_abs_traffic.for_each_annotation(lambda a: a.update(text=a.text.replace(street_name, street_name + ' (segment no:' + segment_id + ')')))
 
-    # Create average traffic bar chart
+    ### Create average traffic bar chart
     df_avg_traffic = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
     # Sort on hour to avoid line graph jumps around hour gaps
     if radio_time_unit == 'hour' or radio_time_unit == 'day':
@@ -949,7 +969,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     # fig.update_xaxes(dtick="M1", tickformat="%b\n%Y")
 
 
-    # Create percentage speed bar chart
+    ### Create percentage speed bar chart
 
     # Add column with all car speed %
     df_bar_speed = traffic_df_upt_dt_str
@@ -992,7 +1012,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     for annotation in bar_perc_speed.layout.annotations:
         annotation['font'] = {'size': 14}
 
-    # Create percentage speed average bar chart
+    ### Create percentage speed average bar chart
     df_bar_avg_speed_traffic = df_bar_speed.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'car_speed0': 'mean', 'car_speed10': 'mean', 'car_speed20': 'mean', 'car_speed30': 'mean', 'car_speed40': 'mean', 'car_speed50': 'mean', 'car_speed60': 'mean', 'car_speed70': 'mean'})
 
     bar_avg_speed = px.bar(df_bar_avg_speed_traffic,
@@ -1025,10 +1045,9 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     bar_avg_speed.for_each_yaxis(lambda yaxis: yaxis.update(showticklabels=True))
     for annotation in bar_avg_speed.layout.annotations: annotation['font'] = {'size': 14}
 
-    # Create v85 graph
+    ### Create v85 bar graph
     df_bar_v85 = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort= False, as_index=False).agg({'v85': 'mean'})
 
-    # Create v85 bar chart
     bar_v85 = px.bar(df_bar_v85,
         x=radio_time_unit, y='v85',
         color='v85',
@@ -1051,34 +1070,45 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     for annotation in bar_v85.layout.annotations:
         annotation['font'] = {'size': 14}
 
-    # Create explorer chart
+    ### Create ranking chart
     df_bar_ranking = traffic_df_upt_dt.groupby(by=['osm.name', 'street_selection'], sort= False, as_index=False).agg({'ped_total': 'sum', 'bike_total': 'sum', 'car_total': 'sum', 'heavy_total': 'sum'})
     df_bar_ranking = df_bar_ranking.sort_values(by=[radio_y_axis], ascending=False)
     df_bar_ranking.reset_index(inplace=True)
 
     # Assess x and y for annotation
-    annotation_index = df_bar_ranking[df_bar_ranking['osm.name'] == street_name].index[0]
-    annotation_x = annotation_index
-    annotation_y = df_bar_ranking[radio_y_axis].values[annotation_index]
+    if no_data == False:
+        annotation_index = df_bar_ranking[df_bar_ranking['osm.name'] == street_name].index[0]
+        annotation_x = annotation_index
+        annotation_y = df_bar_ranking[radio_y_axis].values[annotation_x]
 
-    bar_ranking = px.bar(df_bar_ranking,
-        x='osm.name', y=radio_y_axis,
-        color=radio_y_axis,
-        color_continuous_scale='temps',
-        labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed'), 'osm.name': _('Street')},
-        title=(_('Absolute traffic') + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
-        height=600,
-    )
+        bar_ranking = px.bar(df_bar_ranking,
+            x='osm.name', y=radio_y_axis,
+            color=radio_y_axis,
+            color_continuous_scale='temps',
+            labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed'), 'osm.name': _('Street')},
+            title=(_('Absolute traffic') + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
+            height=600,
+        )
 
-    bar_ranking.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
-    bar_ranking.add_annotation(x=annotation_x, y=annotation_y, text= street_name + _('<br>(segment no:') + segment_id + ')', showarrow=True)
-    bar_ranking.update_annotations(ax=0, ay=-40, arrowhead=2, arrowsize=2, arrowwidth = 1, arrowcolor= ADFC_darkgrey, xanchor='left')
-    bar_ranking.update_layout(legend_title_text=_('Traffic Type'))
-    bar_ranking.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
-    bar_ranking.update_layout(yaxis_title= 'Total count')
-    for annotation in bar_ranking.layout.annotations: annotation['font'] = {'size': 14}
+        bar_ranking.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
+        bar_ranking.add_annotation(x=annotation_x, y=annotation_y, text= street_name + _('<br>(segment no:') + segment_id + ')', showarrow=True)
+        bar_ranking.update_annotations(ax=0, ay=-40, arrowhead=2, arrowsize=2, arrowwidth = 1, arrowcolor= ADFC_darkgrey, xanchor='left')
+        bar_ranking.update_layout(legend_title_text=_('Traffic Type'))
+        bar_ranking.update_layout({'plot_bgcolor': ADFC_palegrey,'paper_bgcolor': ADFC_palegrey})
+        bar_ranking.update_layout(yaxis_title= 'Total count')
+        for annotation in bar_ranking.layout.annotations: annotation['font'] = {'size': 14}
 
-    # Comparison Graph
+    else:
+        bar_ranking = px.bar(df_bar_ranking,
+            x='osm.name', y=radio_y_axis,
+            color=radio_y_axis,
+            color_continuous_scale='temps',
+            labels={'ped_total': _('Pedestrians'), 'bike_total': _('Bikes'), 'car_total': _('Cars'), 'heavy_total': _('Heavy'), 'osm.length': _('Street Length'), 'osm.maxspeed': _('Max Speed'), 'osm.name': _('Street')},
+            title=(_('Absolute traffic') + ' (' + start_date.split(' ')[0] + ' - ' + end_date.split(' ')[0] + ', ' + str(hour_range[0]) + ' - ' + str(hour_range[1]) + ' h)'),
+            height=600,
+        )
+
+    ### Create comparison Graph
     callback_trigger = ctx.triggered_id
 
     if callback_trigger == 'dropdown_year_A' or callback_trigger == 'dropdown_year_B':
@@ -1113,7 +1143,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
         label = 'Date'
 
     # Prepare traffic_df_upt by selected street
-    traffic_df_upt_str = update_selected_street(traffic_df_upt, segment_id, street_name)
+    no_data, traffic_df_upt_str = update_selected_street(traffic_df_upt, segment_id, street_name)
     df_avg_traffic_delta_concat = get_comparison_data(traffic_df_upt_str, time_division, group_by, selected_value_A, selected_value_B)
 
     #df_avg_traffic_delta = traffic_df_upt_dt_str.groupby(by=[radio_time_unit, 'street_selection'], sort=False,as_index=False).agg({'ped_total': 'mean', 'bike_total': 'mean', 'car_total': 'mean', 'heavy_total': 'mean'})
@@ -1151,7 +1181,7 @@ def update_graphs(radio_time_division, radio_time_unit, street_name, dropdown_ye
     line_avg_delta_traffic.update_xaxes(dtick = 1, tickformat=".0f")
     for annotation in line_avg_delta_traffic.layout.annotations: annotation['font'] = {'size': 14}
 
-    return pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking
+    return selected_street_header, color, pie_traffic, line_abs_traffic, bar_avg_traffic, line_avg_delta_traffic, bar_perc_speed, bar_avg_speed, bar_v85, bar_ranking
 
 if __name__ == "__main__":
     #app.run(host='0.0.0.0', port=8080)
